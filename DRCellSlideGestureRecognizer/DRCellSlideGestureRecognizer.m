@@ -41,16 +41,48 @@
 	return self;
 }
 
-- (UITableView *)tableView {
-	return (UITableView *)self.cell.superview.superview;
+- (id)_parentForView: (UIView*) view withClass: (Class) rClass
+{
+    if ([view isKindOfClass: rClass]) {
+        return view;
+    }
+    
+    if (!view.superview) {
+        return nil;
+    }
+    
+    return [self _parentForView: view.superview withClass: rClass];
 }
 
-- (UITableViewCell *)cell {
-	return (UITableViewCell *)self.view;
+
+- (id)tableView
+{
+    if ([self.cell isKindOfClass: [UICollectionViewCell class]]) {
+        return [self _parentForView: self.cell withClass: [UICollectionView class]];
+    }
+    
+    return [self _parentForView: self.cell withClass: [UITableViewCell class]];
 }
 
-- (NSIndexPath *)indexPath {
-	return [self.tableView indexPathForCell:self.cell];
+
+- (id)cell
+{
+    id parent = [self _parentForView: self.view withClass: [UICollectionViewCell class]];
+    
+    if (parent) {
+        return parent;
+    }
+    
+    return [self _parentForView: self.view withClass: [UITableViewCell class]];;
+}
+
+- (NSIndexPath *)indexPath
+{
+    if ([self.tableView respondsToSelector: @selector(indexPathForCell:)]) {
+        return [self.tableView indexPathForCell:self.cell];
+    }
+    
+    return nil;
 }
 
 - (void)addActions:(NSArray *)actions {
